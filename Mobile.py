@@ -4,10 +4,15 @@ import sys
 import time
 import argparse
 import pymongo
+import bluetooth
 
 from pymongo import MongoClient
 
 team = "12"
+
+bd_addr = "B8:27:EB:F0:A7:D7"
+port = 3
+size = 1024
 
 client = MongoClient('localhost', 27017)
 db = client['test_database'] # Using the database provided by MongoDB
@@ -50,27 +55,38 @@ else:
              "Subject" : subject}
 
 
+sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+sock.connect((bd_addr, port))
+
+sock.send(instr)
+
+data = sock.recv(size)
+
+print(data)
+
+sock.close()
+
 # These parts below will be in the repository pi
 # They are just here to be tested before use and
 # to make sure the MongoDB stuff itself is working
 
-if action == 'push':
-    post_id = posts.insert_one(instr).inserted_id
-
-    if post.count() > count:
-        output = {"Status" : "Success"}
-
-    else:
-        output = {"Status" : "Fail"}
-
-    print(output)
-    
-
-elif action == 'pull':
-    for post in posts.find({"Subject" : subject}):
-        output = {"MsgID" : post['MsgID'],
-                  "Message" : post['Message']}
-        print(output)
+##if action == 'push':
+##    post_id = posts.insert_one(instr).inserted_id
+##
+##    if post.count() > count:
+##        output = {"Status" : "Success"}
+##
+##    else:
+##        output = {"Status" : "Fail"}
+##
+##    print(output)
+##    
+##
+##elif action == 'pull':
+##    for post in posts.find({"Subject" : subject}):
+##        output = {"MsgID" : post['MsgID'],
+##                  "Message" : post['Message']}
+##        print(output)
 
 # Next part for the client will be to print out
 # the message that is received from the bridge pi
