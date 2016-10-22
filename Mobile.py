@@ -54,6 +54,9 @@ else:
              "MsgID" : team + "$" + str(time.time()),
              "Subject" : subject}
 
+# instr needs to be serialized in order to be sent over the buffer
+# Probably going to use pickling and encryption like in the first
+# assignment to do this again
 
 sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 sock.connect((bd_addr, port))
