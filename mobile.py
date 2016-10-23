@@ -6,6 +6,7 @@ import argparse
 import pymongo
 import bluetooth
 import pickle
+import re
 
 from pymongo import MongoClient
 
@@ -22,14 +23,13 @@ count = posts.count() # Number of records in database
 
 parser = argparse.ArgumentParser()
 
-# The first 2 arguments are required but message argument isn't
-# (Seemed to be that way from the assignment specs)
+# The first argument is required but subject/message arguments both aren't
 
 parser.add_argument("-a", "--action", type = str,
                     required = True,
                     help = "push or pull messages")
 parser.add_argument("-s", "--subject", type = str,
-                    required = True,
+                    required = False,
                     help = "subject of the message")
 parser.add_argument("-m", "--message", type = str,
                     required = False,
@@ -38,22 +38,52 @@ parser.add_argument("-m", "--message", type = str,
 args = parser.parse_args()
 
 action = args.action
-subject = args.subject
 
-# Make it so the formats of each of the message instructions
-# are different based on the action as well
-# Pull action does not need MsgID for it unlike push
+subject = None
+message = None
+
+if args.subject:
+    subject = args.subject
 
 if args.message:
-    instr = {"Action" : action,
-             "MsgID" : team + "$" + str(time.time()),
-             "Subject" : subject,
-             "Message" : args.message}
+    message = args.message
+
+if subject is None and message is None:
+    print("Must have at least the subject or a message, or both")
+    exit()
+
+if action == 'push':
+    if subject is None:
+        print("Must have subject")
+        exit()
+
+    elif message is None:
+        print("Must have message")
+        exit()
+
+    else:
+        instr = {"Action" : action,
+                 "MsgID" : team + "$" + str(time.time()),
+                 "Subject" : subject,
+                 "Message" : args.message}
+
+elif action == 'pull':
+    if message is None and subject is not None:
+        instr = {"Action" : action,
+                 "Subject" : subject}
+
+    elif subject is None and message is not None:
+        instr = {"Action" : action,
+                 "Message" : message}
+
+    else:
+        instr = {"Action" : action,
+                 "Subject" : subject,
+                 "Message" : message}
 
 else:
-    instr = {"Action" : action,
-             "MsgID" : team + "$" + str(time.time()),
-             "Subject" : subject}
+    print("Incorrect usage of the action argument. Push or pull only")
+    exit()
 
 if action == 'push':
     post_id = posts.insert_one(instr).inserted_id
@@ -88,17 +118,28 @@ sock.close()
 ##    
 ##
 ##elif action == 'pull':
-##    for post in posts.find({"Subject" : subject}):
-##        if args.message:
-##            if args.message.startswith('*') and args.message.endswith('*'):
-##                message = args.message[1:-1]
-##                regexp = re.compile(message)
+##    output = []
+##    regmsg = re.compile("")
+##    regsub = re.compile("")
+##    
+##    if message is not None:
+##        if message.startswith('*') and message.endswith('*'):
+##            message = message[1:-1]
+##            regmsg = re.compile(message)
 ##
-##            if regexp.search(post["Message"]) is not None:
-##                output = {"MsgID" : post['MsgID'],
-##                          "Message" : post['Message']}
-##            else:
-##                output = {"MsgID" : post['MsgID'],
-##                          "Message" : post['Message']}
+##    if subject is not None:
+##        if subject.startswith('*') and subject.endswith('*'):
+##            subject = subject[1:-1]
+##            regsub = re.compile(subject)
+##
+##    for post in posts.find():
+##        if regsub.search(str(post["Subject"])) is not None and regmsg.search(str(post["Message"])) is not None:
+##            msg = {"MsgID" : post['MsgID'],
+##                   "Message" : post['Message']}
+##            
+##            output.append(msg.copy())
+##
+##    if len(output) == 0:
+##        output.append("Not Found")
 ##                
-##        print(output)
+##    print(output)
