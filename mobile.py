@@ -123,14 +123,10 @@ sock.close()
 ##    regsub = re.compile("")
 ##    
 ##    if message is not None:
-##        if message.startswith('*') and message.endswith('*'):
-##            message = message[1:-1]
-##            regmsg = re.compile(message)
+##        regmsg = re.compile(message)
 ##
 ##    if subject is not None:
-##        if subject.startswith('*') and subject.endswith('*'):
-##            subject = subject[1:-1]
-##            regsub = re.compile(subject)
+##        regsub = re.compile(subject)
 ##
 ##    for post in posts.find():
 ##        if regsub.search(str(post["Subject"])) is not None and regmsg.search(str(post["Message"])) is not None:
