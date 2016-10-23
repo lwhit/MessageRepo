@@ -89,10 +89,16 @@ sock.close()
 ##
 ##elif action == 'pull':
 ##    for post in posts.find({"Subject" : subject}):
-##        output = {"MsgID" : post['MsgID'],
-##                  "Message" : post['Message']}
+##        if args.message:
+##            if args.message.startswith('*') and args.message.endswith('*'):
+##                message = args.message[1:-1]
+##                regexp = re.compile(message)
+##
+##            if regexp.search(post["Message"]) is not None:
+##                output = {"MsgID" : post['MsgID'],
+##                          "Message" : post['Message']}
+##            else:
+##                output = {"MsgID" : post['MsgID'],
+##                          "Message" : post['Message']}
+##                
 ##        print(output)
-
-# Next part for the client will be to print out
-# the message that is received from the bridge pi
-# after that receives its message from the repository
