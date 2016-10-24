@@ -12,6 +12,7 @@ from pymongo import MongoClient
 
 team = "12"
 
+# Bluetooth information to connect to bridge pi
 bd_addr = "B8:27:EB:F0:A7:D7"
 port = 3
 size = 1024
@@ -48,10 +49,12 @@ if args.subject:
 if args.message:
     message = args.message
 
+# Checks to see at least one of the 2 is present
 if subject is None and message is None:
     print("Must have at least the subject or a message, or both")
     exit()
 
+# If the action is to push, there must be both arguments
 if action == 'push':
     if subject is None:
         print("Must have subject")
@@ -67,6 +70,7 @@ if action == 'push':
                  "Subject" : subject,
                  "Message" : args.message}
 
+# If action is pull, either subject or message alone is allowed
 elif action == 'pull':
     if message is None and subject is not None:
         instr = {"Action" : action,
@@ -85,14 +89,21 @@ else:
     print("Incorrect usage of the action argument. Push or pull only")
     exit()
 
+# Inserting the data into the local repository
 if action == 'push':
     post_id = posts.insert_one(instr).inserted_id
 
+# Deleting the non-serializable object from the dictionary
+instr.pop('_id', None)
+
+# Serializing the data to send over Bluetooth sockets
 msg = pickle.dumps(instr)
 
+# Connecting to the Bluetooth bridge
 sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 sock.connect((bd_addr, port))
 
+# Sending the message
 sock.send(msg)
 
 data = sock.recv(size)
@@ -100,42 +111,3 @@ data = sock.recv(size)
 print(str(pickle.loads(data)))
 
 sock.close()
-
-# These parts below will be in the repository pi
-# They are just here to be tested before use and
-# to make sure the MongoDB stuff itself is working
-
-##if action == 'push':
-##    post_id = posts.insert_one(instr).inserted_id
-##
-##    if post.count() > count:
-##        output = {"Status" : "Success"}
-##
-##    else:
-##        output = {"Status" : "Fail"}
-##
-##    print(output)
-##    
-##
-##elif action == 'pull':
-##    output = []
-##    regmsg = re.compile("")
-##    regsub = re.compile("")
-##    
-##    if message is not None:
-##        regmsg = re.compile(message)
-##
-##    if subject is not None:
-##        regsub = re.compile(subject)
-##
-##    for post in posts.find():
-##        if regsub.search(str(post["Subject"])) is not None and regmsg.search(str(post["Message"])) is not None:
-##            msg = {"MsgID" : post['MsgID'],
-##                   "Message" : post['Message']}
-##            
-##            output.append(msg.copy())
-##
-##    if len(output) == 0:
-##        output.append("Not Found")
-##                
-##    print(output)
